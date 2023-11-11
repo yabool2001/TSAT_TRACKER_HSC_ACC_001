@@ -1,0 +1,11 @@
+../Core/Src/main.c:75:5:main	5
+../Core/Src/main.c:168:6:SystemClock_Config	3
+../Core/Src/main.c:215:13:MX_RTC_Init	2
+../Core/Src/main.c:252:13:MX_SPI1_Init	2
+../Core/Src/main.c:292:13:MX_USART2_UART_Init	5
+../Core/Src/main.c:340:13:MX_GPIO_Init	1
+../Core/Src/main.c:387:9:my_lis2dw12_platform_write	1
+../Core/Src/main.c:397:9:my_lis2dw12_platform_read	1
+../Core/Src/main.c:408:6:send_2_dbg	1
+../Core/Src/main.c:412:6:HAL_GPIO_EXTI_Rising_Callback	1
+../Core/Src/main.c:422:6:Error_Handler	1

@@ -31,7 +31,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include "my_lis2dw12.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -53,7 +56,9 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void send_2_dbg ( uint8_t* buff ) ;
+int32_t my_lis2dw12_platform_write ( void* , uint8_t , const uint8_t* , uint16_t ) ;
+int32_t my_lis2dw12_platform_read ( void* , uint8_t , uint8_t* , uint16_t ) ;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -79,7 +84,11 @@ void Error_Handler(void);
 #define ACC_INT2_EXTI_IRQn EXTI4_15_IRQn
 
 /* USER CODE BEGIN Private defines */
-
+#define HUART_DBG						&huart2
+#define HSPI1							&hspi1
+#define UART_TIMEOUT 					1000
+#define UART_TX_MAX_BUFF_SIZE			250
+#define UART_TX_TIMEOUT					100
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -1,0 +1,2 @@
+../my_drivers/Src/my_lis2dw12.c:11:6:my_lis2dw12_init	32	static
+../my_drivers/Src/my_lis2dw12.c:51:9:my_lis2dw12_get_id	32	static

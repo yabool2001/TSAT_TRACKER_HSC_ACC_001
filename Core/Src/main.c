@@ -47,7 +47,10 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+char*		hello = "\nHello TSAT_TRACKER_HSC_ACC_001\n\n" ;
+stmdev_ctx_t my_lis2dw12_ctx ;
+lis2dw12_all_sources_t all_source ;
+//lis2dw12_reg_t int_route ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,13 +100,60 @@ int main(void)
   MX_RTC_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Transmit ( HUART_DBG , (uint8_t*) hello , strlen ( hello ) , UART_TIMEOUT ) ;
+  send_2_dbg ( (uint8_t*) hello ) ;
 
+  my_lis2dw12_ctx.write_reg = my_lis2dw12_platform_write ;
+  my_lis2dw12_ctx.read_reg = my_lis2dw12_platform_read ;
+  my_lis2dw12_ctx.handle = HSPI1 ;
+
+  //Restore default configuration
+  my_lis2dw12_init ( &my_lis2dw12_ctx ) ;
+  /*
+  lis2dw12_reset_set ( &my_lis2dw12_ctx , PROPERTY_ENABLE ) ;
+  do {
+	  lis2dw12_reset_get ( &my_lis2dw12_ctx, &rst ) ;
+  } while ( rst ) ;
+  uint8_t acc_id = 0 ;
+  lis2dw12_device_id_get ( &my_lis2dw12_ctx , &acc_id ) ;
+  if ( acc_id == LIS2DW12_ID )
+  {
+	  lis2dw12_full_scale_set 		( &my_lis2dw12_ctx , LIS2DW12_2g ) ;
+	  lis2dw12_power_mode_set 		( &my_lis2dw12_ctx , LIS2DW12_CONT_LOW_PWR_LOW_NOISE_12bit ) ;
+	  lis2dw12_data_rate_set 		( &my_lis2dw12_ctx , LIS2DW12_XL_ODR_200Hz ) ;
+	  lis2dw12_filter_path_set 		( &my_lis2dw12_ctx , LIS2DW12_HIGH_PASS_ON_OUT ) ;
+	  lis2dw12_wkup_dur_set			( &my_lis2dw12_ctx , 0 ) ;
+	  lis2dw12_wkup_threshold_set	( &my_lis2dw12_ctx, 2 ) ;
+	  lis2dw12_pin_int1_route_get	( &my_lis2dw12_ctx, &int_route.ctrl4_int1_pad_ctrl ) ;
+	  int_route.ctrl4_int1_pad_ctrl.int1_wu = PROPERTY_ENABLE ;
+	  lis2dw12_pin_int1_route_set	( &my_lis2dw12_ctx , &int_route.ctrl4_int1_pad_ctrl ) ;
+  }
+*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t tx_buffer[1000] = {0} ;
   while (1)
   {
+	  if (all_source.wake_up_src.wu_ia)
+	  {
+		  sprintf((char *)tx_buffer, "Wake-Up event on ");
+		  if (all_source.wake_up_src.x_wu)
+		  {
+			  strcat((char *)tx_buffer, "X");
+		  }
+		  if (all_source.wake_up_src.y_wu)
+		  {
+			  strcat((char *)tx_buffer, "Y");
+		  }
+		  if (all_source.wake_up_src.z_wu)
+		  {
+			  strcat((char *)tx_buffer, "Z");
+		  }
+		  strcat((char *)tx_buffer, " direction\r\n");
+		  HAL_UART_Transmit(&huart2, tx_buffer, strlen((char const *)tx_buffer) , 1000 ) ;
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -213,7 +263,7 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
@@ -334,7 +384,35 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+int32_t my_lis2dw12_platform_write ( void *handle , uint8_t reg , const uint8_t *bufp , uint16_t len )
+{
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET ) ;
+	HAL_Delay ( 20 ) ;
+	HAL_SPI_Transmit	( handle , &reg , 1 , 1000 ) ;
+	HAL_SPI_Transmit	( handle , (uint8_t*) bufp , len , 1000 ) ;
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET) ;
 
+	return 0;
+}
+int32_t my_lis2dw12_platform_read ( void *handle , uint8_t reg , uint8_t *bufp , uint16_t len )
+{
+	reg |= 0x80;
+	HAL_GPIO_WritePin ( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET) ;
+	HAL_Delay ( 20 ) ;
+	HAL_SPI_Transmit ( handle , &reg , 1 , 1000 ) ;
+	HAL_SPI_Receive ( handle , bufp , len , 1000 ) ;
+	HAL_GPIO_WritePin ( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET) ;
+
+	return 0;
+}
+void send_2_dbg ( uint8_t* buff )
+{
+	HAL_UART_Transmit ( HUART_DBG , buff , strlen ( (char*) buff ) , UART_TIMEOUT ) ;
+}
+void HAL_GPIO_EXTI_Rising_Callback ( uint16_t GPIO_Pin )
+{
+	send_2_dbg ( (uint8_t*) GPIO_Pin ) ;
+}
 /* USER CODE END 4 */
 
 /**
